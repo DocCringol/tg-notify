@@ -1,5 +1,7 @@
 # tg-notify
 
+NOW IT IS NOT WORKING 'CAUSE THERE IS NO LOGIN SESSION
+
 ## Installation
 
 Tested on python 3.10.10
