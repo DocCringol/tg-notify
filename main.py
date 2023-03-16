@@ -9,7 +9,6 @@ app = FastAPI()
 q = Queue()
 
 def bot(q: Queue):
-	# CFG tg
 	cfg = DotMap(json.load(open("config.json")))
 	client = TelegramClient("Me", cfg.API_ID, cfg.API_HASH)
 	client.start()
