@@ -72,7 +72,7 @@ def new(q: Queue, data: schemas.New, uuid: str):
 		cfg.write(json_cfg)
 	
 	q.put(
-		utils.returnResponce(q, uuid, "new", session_name, 200, 
+		utils.returnResponce(uuid, "new", session_name, 200, 
 			"Bot added and tested successfully")
 	)
 
