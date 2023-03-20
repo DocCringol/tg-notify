@@ -45,9 +45,10 @@ data:
     msg: str
 ```
 
-## To-do's
+## To-do
 
 -	Add the rest of the functions: change, remove, stop
 -	Embed a database instead of jsons
 -	Configure logging
 -	Add more comments
+-	Write example client script
