@@ -20,10 +20,10 @@ class Change(BaseModel):
     api_hash: str | None = None
     bot_token: str | None = None
     
-class Remove(BaseModel):
+class Run(BaseModel):
     session_name: str
 
-class Run(BaseModel):
+class Remove(BaseModel):
     session_name: str
     
 class Stop(BaseModel):
@@ -31,6 +31,7 @@ class Stop(BaseModel):
     
 class Send(BaseModel):
     session_name: str
+    username: str
     msg: str
 
 if __name__ == "__main__":

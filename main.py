@@ -6,52 +6,111 @@ import schemas
 import utils
 import worker
 from multiprocessing import Process, Queue
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI
 from fastapi.responses import JSONResponse
 
 
-# 
+
+#
 # MAIN LOOP
-# 
+#
+
+# Function that process requests getting in mainloop
+def processRequest(q: Queue, qRes: list, botQDict: dict, resQ: Queue, running: dict):
+	data, cmd, uuid = qRes
+	session_name = data.session_name
+
+	# Completing received task
+	if cmd == "new":
+		# Checking existence of session
+		# TODO change WHEN DB
+		if os.path.exists(f"Configs/{session_name}.json"):
+			processResponce(
+				resQ,
+				utils.returnResponce(uuid, cmd, session_name, 400, 
+					"Such session is already exist. /create new one with another name or /remove the old one first"),
+				running
+			)
+			if session_name not in botQDict:
+				botQDict[session_name] = [Queue(), Queue()]
+			return
+		botQDict[session_name] = [Queue(), Queue()]
+		p = Process(target=worker.new, args=((q),(data),(uuid)))
+		p.start()
+
+	elif cmd == "change":
+		pass
+	elif cmd == "remove":
+		pass
+	elif cmd == "run":
+		# TODO change WHEN DB
+		if not os.path.exists(f"Configs/{session_name}.json") or \
+			not os.path.exists(f"Sessions/{session_name}.session"):
+			processResponce(
+				resQ, 
+				utils.returnResponce(uuid, cmd, session_name, 404,
+					"No such session exists. At first /create it"),
+				running
+			)
+			return
+		# TODO del first condition WHEN DB
+		if session_name in running and running[session_name]:
+			processResponce(
+				resQ, 
+				utils.returnResponce(uuid, cmd, session_name, 400,
+					"Bot is already running. At first /stop it"),
+				running
+			)
+			return
+		# TODO change WHEN DB
+		if session_name not in botQDict:
+			botQDict[session_name] = [Queue(), Queue()]
+		botQin = botQDict[session_name][0]
+		botQout = botQDict[session_name][1]
+		p = Process(target=worker.run, args=((q),(botQin),(botQout),(session_name),(uuid)))
+		p.start()
+
+	elif cmd == "stop":
+		pass
+
+	elif cmd == "send":
+		botQin = botQDict[session_name][0]
+		botQout = botQDict[session_name][1]
+		p = Process(target=worker.send, args=((q),(botQin),(botQout),(data),(uuid)))
+		p.start()
+
+
+# Function that process responce getting in mainloop
+def processResponce(resQ: Queue, qRes: dict, running: dict):
+	_, uuid, request_cmd, session_name, status_code, detail = qRes.values()
+	if request_cmd == "new":
+		if status_code == 200:
+			running[session_name] = False
+	if request_cmd == "run":
+		if status_code == 200:
+			running[session_name] = True
+	resQ.put([uuid, status_code, detail])
+
 
 # Function that performs reqested operations in parallel with API
-def mainloop(q: Queue):
+def mainloop(q: Queue, resQ: Queue, running: dict):
+	botQDict = dict()
 	while True:
 		# Waiting for new request and or exiting in case of fatal error with queue
 		try:
 			qRes = q.get()
 		except:
-			# TODO log
+			# TODO Logging
 			print('\nExiting...\n')
 			sys.exit()
 
-		# Checking validity of recieved data
-		try:
-			data: schemas.Default = qRes[0]
-			cmd: str = qRes[1]
-			uq: Queue = qRes[2]
-		except:
-			utils.raiseError(uq, 
-				detail="Something wrong with query or data")
-			continue
-
-		# Completing received task
-		if cmd == "new":
-			# Checking existence of session
-			# TODO DB
-			if os.path.exists(f"Configs/{data.session_name}.json"):
-				utils.raiseError(uq, 
-					detail="Such session is already exist. Make new one with another name or delete the old one first")
-				continue
-			worker.new(uq, data)
-
-
-		elif cmd == "change":
-			pass
-		elif cmd == "remove":
-			pass
-		elif cmd == "run":
-			pass
+		# Processing Request or Responce, depending on what were inside of queue
+		if qRes["fromAPI"]:
+			processRequest(q, qRes["data"], botQDict, resQ, running)
+		elif not qRes["fromAPI"]:
+			processResponce(resQ, qRes, running)
+		else:
+			sys.exit()
 
 
 
@@ -61,19 +120,21 @@ def mainloop(q: Queue):
 
 app = FastAPI()
 
-# Dictionary with unique queues - one queue for each post requests
-uqDict = dict()
+# Dictionary for results of requests (key - UUID)
+results = dict()
 
-# TODO new, change, remove, run, stop, send
-# Function that creats request for creating record in DB about new bot
-@app.post("/new")
-def new(data: schemas.New):
+def post(cmd: str, data: schemas.Default):
 	# Making UUID for client to get result of operation
 	uuid = str(UUID.uuid1())
-	# Creating new queue for request
-	uqDict[uuid] = Queue()
+	# Adding UUID to list of results (False - responce is not ready)
+	results[uuid] = False
 	# Sending request to complete the task
-	q.put((data, "new", uqDict[uuid]))
+	q.put(
+		{
+			"fromAPI": True,
+			"data": [data, cmd, uuid]
+		}
+	)
 	# Returning UUID to user
 	return JSONResponse(
         status_code=202,
@@ -83,49 +144,55 @@ def new(data: schemas.New):
 		}
     )
 
+# TODO Add  functions
+# Function that creats request for creating record in DB about new bot
+@app.post("/new")
+def new(data: schemas.New):
+	return post("new", data)
 
-# TODO Logging for every return or HTTP Exception
-# TODO add deleting uq
+# Function that starts up definite bot
+@app.post("/run")
+def run(data: schemas.Run):
+	return post("run", data)
+
+# Function that sends messege from definite bot
+@app.post("/send")
+def send(data: schemas.Send):
+	return post("send", data)
+
+
+# TODO Logging
 # Function that returns result of previous request
 @app.get("/get_result")
 def get_result(uuid: str):
+	# Processing and saving results
+	while not resQ.empty():
+		res = resQ.get()
+		results[res[0]] = [res[1], res[2]]
+
 	# Checking validity of UUID
 	try:
-		uq = uqDict[uuid]
+		result = results[uuid]
 	except:
-		raise HTTPException(
+		return JSONResponse(
 			status_code=404,
-			detail="Wrong UUID. No such request"
-			)
+			content={"detail":"Wrong UUID. No such request"}
+		)
 	
 	# Checking completeness of request
-	try:
-		result = uq.get_nowait()
-	except uq.Empty:
+	if result:
+		# Deleting returned result
+		results.pop(uuid)
+		# Returning responce
 		return JSONResponse(
-			# TODO Set another status code
-			status_code=200,
-			content={"detail":"Request accepted. Result is not ready. Try again later"}
+			status_code=result[0],
+			content={ "detail": result[1] }
 		)
-	
-	# Returning error or result
-	if result["status"] == "error":
-		raise HTTPException(
-			status_code=result["status_code"],
-			detail=result["detail"]
-			)
 	else:
 		return JSONResponse(
-			status_code=200,
-			content={result}
+			status_code=202,
+			content={"detail":"Request accepted. Result is not ready. Try again later"}
 		)
-
-@app.get("/test")
-def test(msg: str):
-	return JSONResponse(
-		status_code=200,
-		content={"message": msg}
-	)
 
 
 
@@ -136,10 +203,12 @@ def test(msg: str):
 if __name__ == "__main__":
 	# Getting all arguments
 	args = utils.get_args()
-	# Starting main loop process, and initialising queue to "talk" with it
+	# Dictionary of sessions running
+	running = dict()
+	# Starting main loop process, and initialising queues to "talk" with it
 	q = Queue()
-	p = Process(target=mainloop, args=((q),))
-	p.daemon = True
+	resQ = Queue()
+	p = Process(target=mainloop, args=((q),(resQ),(running)))
 	p.start()
 	# Starting API
 	uvicorn.run(app, host=args.host, port=args.port)
