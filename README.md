@@ -1,10 +1,10 @@
 # tg-notify
 
-NOW IT IS NOT WORKING 'CAUSE THERE IS NO LOGIN SESSION
-
 ## Installation
 
-Tested on python 3.10.10
+Required Python 3.10 and above
+
+Tested on Python 3.10.10
 
 ```
 pip install -r requirements.txt
@@ -16,9 +16,38 @@ python main.py -h
 # or --help for list of commands
 
 # Example of usage
-python main.py -p <port> -c <config-dir>
+python main.py -H <host> -p <port> -c <config-dir>
 ```
 
-## Configuration
+## API
 
-TODO write about configuration
+### /new - add new session (one session - one bot)
+```
+data:
+    session_name: str
+    api_id: str
+    api_hash: str
+    bot_token: str
+```
+
+### /run - run definite session
+```
+data:
+    session_name: str
+```
+
+### /send - send message from definite bot to defenite user 
+User defines only by username for now
+```
+data:
+    session_name: str
+    username: str
+    msg: str
+```
+
+## To-do's
+
+-	Add the rest of the functions: change, remove, stop
+-	Embed a database instead of jsons
+-	Configure logging
+-	Add more comments
