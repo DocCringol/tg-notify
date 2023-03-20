@@ -1,10 +1,9 @@
-import os
 import sys
 import uuid as UUID
 import uvicorn
 import schemas
 import utils
-import worker
+import tasks
 from multiprocessing import Process, Queue
 from fastapi import FastAPI
 from fastapi.responses import JSONResponse
@@ -14,83 +13,6 @@ from fastapi.responses import JSONResponse
 #
 # MAIN LOOP
 #
-
-# Function that process requests getting in mainloop
-def processRequest(q: Queue, qRes: list, botQDict: dict, resQ: Queue, running: dict):
-	data, cmd, uuid = qRes
-	session_name = data.session_name
-
-	# Completing received task
-	if cmd == "new":
-		# Checking existence of session
-		# TODO change WHEN DB
-		if os.path.exists(f"Configs/{session_name}.json"):
-			processResponce(
-				resQ,
-				utils.returnResponce(uuid, cmd, session_name, 400, 
-					"Such session is already exist. /create new one with another name or /remove the old one first"),
-				running
-			)
-			if session_name not in botQDict:
-				botQDict[session_name] = [Queue(), Queue()]
-			return
-		botQDict[session_name] = [Queue(), Queue()]
-		p = Process(target=worker.new, args=((q),(data),(uuid)))
-		p.start()
-
-	elif cmd == "change":
-		pass
-	elif cmd == "remove":
-		pass
-	elif cmd == "run":
-		# TODO change WHEN DB
-		if not os.path.exists(f"Configs/{session_name}.json") or \
-			not os.path.exists(f"Sessions/{session_name}.session"):
-			processResponce(
-				resQ, 
-				utils.returnResponce(uuid, cmd, session_name, 404,
-					"No such session exists. At first /create it"),
-				running
-			)
-			return
-		# TODO del first condition WHEN DB
-		if session_name in running and running[session_name]:
-			processResponce(
-				resQ, 
-				utils.returnResponce(uuid, cmd, session_name, 400,
-					"Bot is already running. At first /stop it"),
-				running
-			)
-			return
-		# TODO change WHEN DB
-		if session_name not in botQDict:
-			botQDict[session_name] = [Queue(), Queue()]
-		botQin = botQDict[session_name][0]
-		botQout = botQDict[session_name][1]
-		p = Process(target=worker.run, args=((q),(botQin),(botQout),(session_name),(uuid)))
-		p.start()
-
-	elif cmd == "stop":
-		pass
-
-	elif cmd == "send":
-		botQin = botQDict[session_name][0]
-		botQout = botQDict[session_name][1]
-		p = Process(target=worker.send, args=((q),(botQin),(botQout),(data),(uuid)))
-		p.start()
-
-
-# Function that process responce getting in mainloop
-def processResponce(resQ: Queue, qRes: dict, running: dict):
-	_, uuid, request_cmd, session_name, status_code, detail = qRes.values()
-	if request_cmd == "new":
-		if status_code == 200:
-			running[session_name] = False
-	if request_cmd == "run":
-		if status_code == 200:
-			running[session_name] = True
-	resQ.put([uuid, status_code, detail])
-
 
 # Function that performs reqested operations in parallel with API
 def mainloop(q: Queue, resQ: Queue, running: dict):
@@ -106,9 +28,9 @@ def mainloop(q: Queue, resQ: Queue, running: dict):
 
 		# Processing Request or Responce, depending on what were inside of queue
 		if qRes["fromAPI"]:
-			processRequest(q, qRes["data"], botQDict, resQ, running)
+			tasks.processRequest(q, qRes["data"], botQDict, resQ, running)
 		elif not qRes["fromAPI"]:
-			processResponce(resQ, qRes, running)
+			tasks.processResponce(resQ, qRes, running)
 		else:
 			sys.exit()
 
