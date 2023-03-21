@@ -45,6 +45,7 @@ app = FastAPI()
 # Dictionary for results of requests (key - UUID)
 results = dict()
 
+# Function, that transfers all post request to mainloop
 def post(cmd: str, data: schemas.Default):
 	# Making UUID for client to get result of operation
 	uuid = str(UUID.uuid1())
@@ -83,7 +84,6 @@ def send(data: schemas.Send):
 	return post("send", data)
 
 
-# TODO Logging
 # Function that returns result of previous request
 @app.get("/get_result")
 def get_result(uuid: str):
