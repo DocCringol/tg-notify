@@ -1,10 +1,3 @@
-<style>
-	.attention {
-		font-size: 1.5rem;
-		font-weight: 1000;
-	}
-</style>
-
 # tg-notify
 
 ## About project
