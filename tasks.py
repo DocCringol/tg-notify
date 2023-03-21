@@ -6,6 +6,7 @@ from multiprocessing import Process, Queue
 
 
 
+
 # Function that completes /create task (Creates new bot session)
 def create(q: Queue, resQ: Queue, botQDict: dict, uuid: str, session_name: str, data: schemes.CreateSession, running: dict):
 	# Checking existence of session
