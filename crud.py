@@ -67,8 +67,8 @@ def update_session(data: schemes.UpdateSession):
 	return OK
 
 
-def remove_session(data: schemes.RemoveSession):
-	session = get_session(data.session_name)
+def remove_session(session_name: str):
+	session = get_session(session_name)
 	if session is NOT_EXIST:
 		return NO_SUCH_SESSION
 	

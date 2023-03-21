@@ -2,8 +2,7 @@ __pycache__
 Sessions/*
 Configs/*
 db/*.db
-/test.py
-/testAPI.py
+*.test.py
 .editorconfig
 *.session
 *.session-journal
