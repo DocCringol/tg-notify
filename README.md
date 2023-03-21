@@ -1,10 +1,3 @@
-<style>
-	.attention {
-		font-size: 1.5rem;
-		font-weight: 1000;
-	}
-</style>
-
 # tg-notify
 
 ## About project
@@ -63,10 +56,8 @@ data:
 ```
 
 ### /update - update session 
-<span class="attention">
-	MAJOR ISSUES with /update<br>
-	Better use /remove and /create for now
-</span>
+#### MAJOR ISSUES with /update
+#### Better use /remove and /create for now
 
 ###
 
