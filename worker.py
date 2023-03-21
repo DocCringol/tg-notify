@@ -1,3 +1,4 @@
+import os
 import utils
 import schemes
 from crud import *
@@ -8,10 +9,10 @@ from multiprocessing import Process, Queue
 
 def bot_(qIn: Queue, qOut: Queue, session_name: str, run_uuid: str):
 	session = get_session(session_name)
-	print(f"\n\n{session}\n\n")
+	print(session)
 	if session is NOT_EXIST:
-		q.put(
-			utils.returnResponce(uuid, "create", session_name, 404, 
+		qOut.put(
+			utils.returnResponce(run_uuid, "run", session_name, 404, 
 				"No such session. At first /create a new one")
 		)
 		return
@@ -52,6 +53,13 @@ def bot_(qIn: Queue, qOut: Queue, session_name: str, run_uuid: str):
 						"Error while trying to send message. Check validity of contact data")
 				)
 				continue
+		elif cmd == "stop":
+			_, uuid = request
+			break
+	qOut.put(
+		utils.returnResponce(uuid, cmd, session_name, 200, 
+			"Bot is stopped")
+	)
 
 
 def create(q: Queue, data: schemes.CreateSession, uuid: str):
@@ -83,9 +91,67 @@ def create(q: Queue, data: schemes.CreateSession, uuid: str):
 	)
 
 
+def update(q: Queue, data: schemes.UpdateSession, uuid: str):
+	session_name = data.session_name
+	session = get_session(session_name)
+	if session is NOT_EXIST:
+		q.put(
+			utils.returnResponce(uuid, "update", session_name, 404, 
+				"Session doesn't exist. At first /create it")
+		)
+		return
+	
+	os.remove(f"Sessions/{session_name}.session")
+	update_session(data)
+	# new_session = get_session(session_name)
+	# TODO valid testing of corect data
+	# try:
+	# 	TelegramClient(
+	# 		f"Sessions/{session_name}", 
+	# 		new_session.api_id, 
+	# 	    new_session.api_hash
+	# 	).start(bot_token=new_session.bot_token)
+	# except:
+	# 	remove_session(session_name)
+	# 	data = schemes.CreateSession(session_name=session_name, api_id=session.api_id,
+	# 		       api_hash=session.api_hash, bot_token=session.bot_token)
+	# 	print('\n\n')
+	# 	print(data)
+	# 	print(create_session(data))
+	# 	print('\n\n')
+	# 	q.put(
+	# 		utils.returnResponce(uuid, "update", session_name, 400, 
+	# 			"Invalid app/bot data")
+	# 	)
+	# 	return
+	
+	q.put(
+		utils.returnResponce(uuid, "update", session_name, 200, 
+			"Session updated and tested successfully")
+	)
+
+def remove(q: Queue, session_name: str, uuid: str):
+	if remove_session(session_name) is NO_SUCH_SESSION:
+		q.put(
+			utils.returnResponce(uuid, "remove", session_name, 404, 
+				"Session doesn't exist. At first /create it")
+		)
+		return
+	os.remove(f"Session/{session_name}.session")
+	q.put(
+		utils.returnResponce(uuid, "remove", session_name, 200, 
+			"Succesfully removed session")
+	)
+	
+
 def start(q: Queue, botQin: Queue, botQout: Queue, session_name: str, uuid: str):
 	p = Process(target=bot_, args=((botQin),(botQout),(session_name),(uuid)))
 	p.start()
+	q.put(botQout.get())
+
+
+def stop(q: Queue, botQin: Queue, botQout: Queue, uuid: str):
+	botQin.put(["stop", uuid])
 	q.put(botQout.get())
 
 

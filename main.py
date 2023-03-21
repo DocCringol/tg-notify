@@ -26,13 +26,18 @@ def mainloop(q: Queue, resQ: Queue, running: dict):
 			print('\nExiting...\n')
 			sys.exit()
 
-		# Processing Request or Responce, depending on what were inside of queue
-		if qRes["fromAPI"]:
-			tasks.processRequest(q, qRes["data"], botQDict, resQ, running)
-		elif not qRes["fromAPI"]:
-			tasks.processResponce(resQ, qRes, running)
-		else:
-			sys.exit()
+		try:
+			# Processing Request or Responce, depending on what were inside of queue
+			if qRes["fromAPI"]:
+				tasks.processRequest(q, qRes["data"], botQDict, resQ, running)
+			else:
+				tasks.processResponce(resQ, qRes, running)
+		except Exception as e:
+			pass
+			#  TODO normal exception exit
+			print(f"\n\n{e}\n\n")
+			# tasks.processResponce(resQ, qRes, running)
+			# sys.exit()
 
 
 
@@ -67,16 +72,32 @@ def post(cmd: str, data: schemes.Default):
 		}
     )
 
+
 # TODO Add  functions
-# Function that creats request for creating record in DB about new bot
+# Function that creates request for creating record in DB about new bot
 @app.post("/create")
 def create(data: schemes.CreateSession):
 	return post("create", data)
+
+# Function that creates request for updating record in DB about bot
+@app.post("/update")
+def update(data: schemes.UpdateSession):
+	return post("update", data)
+
+# Function that creates request for removeing record from DB about bot
+@app.post("/remove")
+def update(data: schemes.RemoveSession):
+	return post("remove", data)
 
 # Function that starts up definite bot
 @app.post("/start")
 def start(data: schemes.StartSession):
 	return post("start", data)
+
+# Function that stops definite bot
+@app.post("/stop")
+def stop(data: schemes.StopSession):
+	return post("stop", data)
 
 # Function that sends messege from definite bot
 @app.post("/send")
