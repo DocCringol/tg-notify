@@ -1,33 +1,39 @@
-import time
-import json
 import utils
-import schemas
-from dotmap import DotMap
-from telethon.sync import TelegramClient, events
+import schemes
+from crud import *
+from telethon.sync import TelegramClient
 from multiprocessing import Process, Queue
 
 
 
 def bot_(qIn: Queue, qOut: Queue, session_name: str, run_uuid: str):
-	try:
-		cfg = DotMap(json.load(open(f"Configs/{session_name}.json")))
-		bot = TelegramClient(
-				f"Sessions/{session_name}", 
-				cfg.api_id,
-				cfg.api_hash
-		)
-		bot.start()
-		qOut.put(
-			utils.returnResponce(run_uuid, "run", session_name, 200, 
-				"Bot is running")
-		)
-		
-	except:
-		qOut.put(
-			utils.returnResponce(run_uuid, "run", session_name, 200, 
-				"Something wrong. Maybe, wrong session")
+	session = get_session(session_name)
+	print(f"\n\n{session}\n\n")
+	if session is NOT_EXIST:
+		q.put(
+			utils.returnResponce(uuid, "create", session_name, 404, 
+				"No such session. At first /create a new one")
 		)
 		return
+
+	try:
+		bot = TelegramClient(
+				f"Sessions/{session_name}", 
+				session.api_id,
+				session.api_hash,
+		)
+		bot.start(bot_token=session.bot_token)
+	except:
+		qOut.put(
+			utils.returnResponce(run_uuid, "start", session_name, 400, 
+				"Error while starting bot. Please, check internet connection")
+		)
+		return
+	
+	qOut.put(
+		utils.returnResponce(run_uuid, "start", session_name, 200, 
+			"Bot is running")
+	)
 
 	while True:
 		request = qIn.get()
@@ -48,8 +54,9 @@ def bot_(qIn: Queue, qOut: Queue, session_name: str, run_uuid: str):
 				continue
 
 
-def new(q: Queue, data: schemas.New, uuid: str):
+def create(q: Queue, data: schemes.CreateSession, uuid: str):
 	session_name = data.session_name
+	# Testing data (could we run bot with this data?)
 	try:
 		TelegramClient(
 			f"Sessions/{session_name}", 
@@ -58,52 +65,49 @@ def new(q: Queue, data: schemas.New, uuid: str):
 		).start(bot_token=data.bot_token)
 	except:
 		q.put(
-			utils.returnResponce(uuid, "new", session_name, 400, 
+			utils.returnResponce(uuid, "create", session_name, 400, 
 				"Invalid app/bot data")
 		)
 		return
-	cfg_data = {
-		"api_id": data.api_id,
-		"api_hash": data.api_hash,
-		"bot_token": data.bot_token
-	}
-	json_cfg = json.dumps(cfg_data)
-	with open(f"Configs/{session_name}.json", "w") as cfg:
-		cfg.write(json_cfg)
+	
+	if create_session(data) is SESSION_ALREADY_EXIST:
+		q.put(
+			utils.returnResponce(uuid, "create", session_name, 400, 
+				f"Session already exist. At first /remove session with name: {session_name}. Or /update it, if you want to change data")
+		)
+		return
 	
 	q.put(
-		utils.returnResponce(uuid, "new", session_name, 200, 
+		utils.returnResponce(uuid, "create", session_name, 200, 
 			"Bot added and tested successfully")
 	)
 
 
-def run(q: Queue, botQin: Queue, botQout: Queue, session_name: str, uuid: str):
+def start(q: Queue, botQin: Queue, botQout: Queue, session_name: str, uuid: str):
 	p = Process(target=bot_, args=((botQin),(botQout),(session_name),(uuid)))
 	p.start()
 	q.put(botQout.get())
 
 
-def send(q: Queue, botQin: Queue, botQout: Queue, data: schemas.Send, uuid: str):
-	botQin.put(["send", data.username, data.msg, uuid])
+def send(q: Queue, botQin: Queue, botQout: Queue, data: schemes.SendMessage, uuid: str):
+	botQin.put(["send", data.user, data.msg, uuid])
 	q.put(botQout.get())
 
 
 
 if __name__ == "__main__":
 	print("\nThis is a module for tg-notify, don't try to run it as a script\n")
+
 	print("\nTest\n")
 	q = Queue()
 	botQin = Queue()
 	botQout = Queue()
 	session_name = input("\nInput session name:\n")
-	data = schemas.Send
-	data.session_name = session_name
-	data.username = input("\nInput username:\n")
-	data.msg = input("\nInput message:\n")
+	data = schemes.SendMessage(session_name=session_name, user=input("\nInput nickname with @:\n"), msg=input("\nInput message:\n"))
 	uuid = "test"
-	run(q, botQin, botQout, session_name, "test")
-	print("\n1\n")
+
+	start(q, botQin, botQout, session_name, "test")
 	print(q.get())
+
 	send(q, botQin, botQout, data, "test")
-	print("\n2\n")
 	print(q.get())

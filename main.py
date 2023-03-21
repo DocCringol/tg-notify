@@ -1,7 +1,7 @@
 import sys
 import uuid as UUID
 import uvicorn
-import schemas
+import schemes
 import utils
 import tasks
 from multiprocessing import Process, Queue
@@ -45,7 +45,8 @@ app = FastAPI()
 # Dictionary for results of requests (key - UUID)
 results = dict()
 
-def post(cmd: str, data: schemas.Default):
+# Function, that transfers all post request to mainloop
+def post(cmd: str, data: schemes.Default):
 	# Making UUID for client to get result of operation
 	uuid = str(UUID.uuid1())
 	# Adding UUID to list of results (False - responce is not ready)
@@ -68,22 +69,21 @@ def post(cmd: str, data: schemas.Default):
 
 # TODO Add  functions
 # Function that creats request for creating record in DB about new bot
-@app.post("/new")
-def new(data: schemas.New):
-	return post("new", data)
+@app.post("/create")
+def create(data: schemes.CreateSession):
+	return post("create", data)
 
 # Function that starts up definite bot
-@app.post("/run")
-def run(data: schemas.Run):
-	return post("run", data)
+@app.post("/start")
+def start(data: schemes.StartSession):
+	return post("start", data)
 
 # Function that sends messege from definite bot
 @app.post("/send")
-def send(data: schemas.Send):
+def send(data: schemes.SendMessage):
 	return post("send", data)
 
 
-# TODO Logging
 # Function that returns result of previous request
 @app.get("/get_result")
 def get_result(uuid: str):

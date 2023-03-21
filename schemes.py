@@ -1,37 +1,39 @@
 from pydantic import BaseModel
-from fastapi import File, UploadFile
 
 class Default(BaseModel):
     session_name: str
     api_id: str | None = None
     api_hash: str | None = None
     bot_token: str | None = None
+    default_user: str | None = None
     msg: str | None = None
 
-class New(BaseModel):
+class CreateSession(BaseModel):
     session_name: str
     api_id: str
     api_hash: str
     bot_token: str
+    default_user: str | None = None
     
-class Change(BaseModel):
+class UpdateSession(BaseModel):
     session_name: str
     api_id: str | None = None
     api_hash: str | None = None
     bot_token: str | None = None
+    default_user: str | None = None
     
-class Run(BaseModel):
-    session_name: str
-
-class Remove(BaseModel):
+class RemoveSession(BaseModel):
     session_name: str
     
-class Stop(BaseModel):
+class StartSession(BaseModel):
     session_name: str
     
-class Send(BaseModel):
+class StopSession(BaseModel):
     session_name: str
-    username: str
+    
+class SendMessage(BaseModel):
+    session_name: str
+    user: str | None = None
     msg: str
 
 if __name__ == "__main__":
