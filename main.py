@@ -75,7 +75,7 @@ def create(data: schemes.CreateSession):
 
 # Function that starts up definite bot
 @app.post("/start")
-def start(data: schemes.RunSession):
+def start(data: schemes.StartSession):
 	return post("start", data)
 
 # Function that sends messege from definite bot

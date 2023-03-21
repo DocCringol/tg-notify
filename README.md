@@ -21,16 +21,17 @@ python main.py -H <host> -p <port> -c <config-dir>
 
 ## API
 
-### /new - add new session (one session - one bot)
+### /create - add new session (one session - one bot)
 ```
 data:
     session_name: str
     api_id: str
     api_hash: str
     bot_token: str
+	default_user: str | None = None
 ```
 
-### /run - run definite session
+### /start - start definite session
 ```
 data:
     session_name: str
@@ -48,7 +49,6 @@ data:
 ## To-do
 
 -	Add the rest of the functions: change, remove, stop
--	Embed a database instead of jsons
 -	Configure logging
 -	Add more comments
 -	Write example client script

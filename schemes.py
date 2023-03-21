@@ -25,7 +25,7 @@ class UpdateSession(BaseModel):
 class RemoveSession(BaseModel):
     session_name: str
     
-class RunSession(BaseModel):
+class StartSession(BaseModel):
     session_name: str
     
 class StopSession(BaseModel):

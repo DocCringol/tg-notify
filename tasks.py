@@ -8,7 +8,7 @@ from multiprocessing import Process, Queue
 
 # Function that completes /create task (Creates new bot session)
 def create(q: Queue, resQ: Queue, botQDict: dict, uuid: str, session_name: str, data: schemes.CreateSession, running: dict):
-    # Checking existence of session
+	# Checking existence of session
 	# TODO change WHEN DB
 	if os.path.exists(f"Configs/{session_name}.json"):
 		processResponce(
@@ -32,17 +32,6 @@ def create(q: Queue, resQ: Queue, botQDict: dict, uuid: str, session_name: str, 
 # Function that completes /start task (Runs definite bot session)
 def start(q: Queue, resQ: Queue, botQDict: dict, uuid: str, session_name: str, running: dict):
 	# Checking existence of session
-	# TODO change WHEN DB
-	if not os.path.exists(f"Configs/{session_name}.json") or \
-		not os.path.exists(f"Sessions/{session_name}.session"):
-		processResponce(
-			resQ, 
-			utils.returnResponce(uuid, "start", session_name, 404,
-				"No such session exists. At first /create it"),
-			running
-		)
-		return
-	# Checking if session is already started
 	# TODO this check but for bot and not session only
 	# TODO remove first condition WHEN DB
 	if session_name in running and running[session_name]:
