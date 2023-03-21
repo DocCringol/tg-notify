@@ -8,7 +8,6 @@ DBSession = sessionmaker(bind=engine)
 db = DBSession()
 Base.metadata.create_all(engine)
 
-# Constants
 NOT_EXIST = None
 NO_SUCH_SESSION = False
 SESSION_ALREADY_EXIST = False

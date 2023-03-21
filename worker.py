@@ -18,13 +18,13 @@ def bot_(qIn: Queue, qOut: Queue, session_name: str, run_uuid: str):
 		)
 		bot.start()
 		qOut.put(
-			utils.returnResponce(run_uuid, "run", session_name, 200, 
+			utils.returnResponce(run_uuid, "start", session_name, 200, 
 				"Bot is running")
 		)
 		
 	except:
 		qOut.put(
-			utils.returnResponce(run_uuid, "run", session_name, 200, 
+			utils.returnResponce(run_uuid, "start", session_name, 200, 
 				"Something wrong. Maybe, wrong session")
 		)
 		return
@@ -48,7 +48,7 @@ def bot_(qIn: Queue, qOut: Queue, session_name: str, run_uuid: str):
 				continue
 
 
-def new(q: Queue, data: schemes.CreateSession, uuid: str):
+def create(q: Queue, data: schemes.CreateSession, uuid: str):
 	session_name = data.session_name
 	try:
 		TelegramClient(
@@ -58,7 +58,7 @@ def new(q: Queue, data: schemes.CreateSession, uuid: str):
 		).start(bot_token=data.bot_token)
 	except:
 		q.put(
-			utils.returnResponce(uuid, "new", session_name, 400, 
+			utils.returnResponce(uuid, "create", session_name, 400, 
 				"Invalid app/bot data")
 		)
 		return
@@ -72,12 +72,12 @@ def new(q: Queue, data: schemes.CreateSession, uuid: str):
 		cfg.write(json_cfg)
 	
 	q.put(
-		utils.returnResponce(uuid, "new", session_name, 200, 
+		utils.returnResponce(uuid, "create", session_name, 200, 
 			"Bot added and tested successfully")
 	)
 
 
-def run(q: Queue, botQin: Queue, botQout: Queue, session_name: str, uuid: str):
+def start(q: Queue, botQin: Queue, botQout: Queue, session_name: str, uuid: str):
 	p = Process(target=bot_, args=((botQin),(botQout),(session_name),(uuid)))
 	p.start()
 	q.put(botQout.get())
@@ -101,9 +101,7 @@ if __name__ == "__main__":
 	data.user = input("\nInput nickname with @:\n")
 	data.msg = input("\nInput message:\n")
 	uuid = "test"
-	run(q, botQin, botQout, session_name, "test")
-	print("\n1\n")
+	start(q, botQin, botQout, session_name, "test")
 	print(q.get())
 	send(q, botQin, botQout, data, "test")
-	print("\n2\n")
 	print(q.get())

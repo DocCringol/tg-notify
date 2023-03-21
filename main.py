@@ -69,14 +69,14 @@ def post(cmd: str, data: schemes.Default):
 
 # TODO Add  functions
 # Function that creats request for creating record in DB about new bot
-@app.post("/new")
-def new(data: schemes.CreateSession):
-	return post("new", data)
+@app.post("/create")
+def create(data: schemes.CreateSession):
+	return post("create", data)
 
 # Function that starts up definite bot
-@app.post("/run")
-def run(data: schemes.RunSession):
-	return post("run", data)
+@app.post("/start")
+def start(data: schemes.RunSession):
+	return post("start", data)
 
 # Function that sends messege from definite bot
 @app.post("/send")

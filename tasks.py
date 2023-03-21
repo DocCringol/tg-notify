@@ -6,14 +6,14 @@ from multiprocessing import Process, Queue
 
 
 
-# Function that completes /new task (Creates new bot session)
-def new(q: Queue, resQ: Queue, botQDict: dict, uuid: str, session_name: str, data: schemes.CreateSession, running: dict):
+# Function that completes /create task (Creates new bot session)
+def create(q: Queue, resQ: Queue, botQDict: dict, uuid: str, session_name: str, data: schemes.CreateSession, running: dict):
     # Checking existence of session
 	# TODO change WHEN DB
 	if os.path.exists(f"Configs/{session_name}.json"):
 		processResponce(
 			resQ,
-			utils.returnResponce(uuid, "new", session_name, 400, 
+			utils.returnResponce(uuid, "create", session_name, 400, 
 				"Such session is already exist. /create new one with another name or /remove the old one first"),
 			running
 		)
@@ -25,19 +25,19 @@ def new(q: Queue, resQ: Queue, botQDict: dict, uuid: str, session_name: str, dat
 	# Adding queues for current session
 	botQDict[session_name] = [Queue(), Queue()]
 	# Starting process, that will make new bor session
-	p = Process(target=worker.new, args=((q),(data),(uuid)))
+	p = Process(target=worker.create, args=((q),(data),(uuid)))
 	p.start()
 
 
-# Function that completes /run task (Runs definite bot session)
-def run(q: Queue, resQ: Queue, botQDict: dict, uuid: str, session_name: str, running: dict):
+# Function that completes /start task (Runs definite bot session)
+def start(q: Queue, resQ: Queue, botQDict: dict, uuid: str, session_name: str, running: dict):
 	# Checking existence of session
 	# TODO change WHEN DB
 	if not os.path.exists(f"Configs/{session_name}.json") or \
 		not os.path.exists(f"Sessions/{session_name}.session"):
 		processResponce(
 			resQ, 
-			utils.returnResponce(uuid, "run", session_name, 404,
+			utils.returnResponce(uuid, "start", session_name, 404,
 				"No such session exists. At first /create it"),
 			running
 		)
@@ -48,7 +48,7 @@ def run(q: Queue, resQ: Queue, botQDict: dict, uuid: str, session_name: str, run
 	if session_name in running and running[session_name]:
 		processResponce(
 			resQ, 
-			utils.returnResponce(uuid, "run", session_name, 400,
+			utils.returnResponce(uuid, "start", session_name, 400,
 				"Bot is already running. At first /stop it"),
 			running
 		)
@@ -60,7 +60,7 @@ def run(q: Queue, resQ: Queue, botQDict: dict, uuid: str, session_name: str, run
 	# Starting process, that will start bot session
 	botQin = botQDict[session_name][0]
 	botQout = botQDict[session_name][1]
-	p = Process(target=worker.run, args=((q),(botQin),(botQout),(session_name),(uuid)))
+	p = Process(target=worker.start, args=((q),(botQin),(botQout),(session_name),(uuid)))
 	p.start()
 
 
@@ -89,14 +89,14 @@ def processRequest(q: Queue, qRes: list, botQDict: dict, resQ: Queue, running: d
 	data, cmd, uuid = qRes
 	session_name = data.session_name
 	# Completing received task
-	if cmd == "new":
-		new(q, resQ, botQDict, uuid, session_name, data, running)
+	if cmd == "create":
+		create(q, resQ, botQDict, uuid, session_name, data, running)
 	elif cmd == "change":
 		pass
 	elif cmd == "remove":
 		pass
-	elif cmd == "run":
-		run(q, resQ, botQDict, uuid, session_name, running)
+	elif cmd == "start":
+		start(q, resQ, botQDict, uuid, session_name, running)
 	elif cmd == "stop":
 		pass
 	elif cmd == "send":
@@ -107,10 +107,10 @@ def processRequest(q: Queue, qRes: list, botQDict: dict, resQ: Queue, running: d
 def processResponce(resQ: Queue, qRes: dict, running: dict):
 	_, uuid, request_cmd, session_name, status_code, detail = qRes.values()
 	# Saving running state for current session
-	if request_cmd == "new":
+	if request_cmd == "create":
 		if status_code == 200:
 			running[session_name] = False
-	if request_cmd == "run":
+	if request_cmd == "start":
 		if status_code == 200:
 			running[session_name] = True
 	# Returning responce to API
