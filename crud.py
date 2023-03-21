@@ -33,11 +33,11 @@ def create_session(data: schemes.CreateSession):
 	session = get_session(data.session_name)
 
 	if session is NOT_EXIST:
-		user = Session(
+		session = Session(
 			session_name=data.session_name, api_id=data.api_id, api_hash=data.api_hash, 
 			bot_token=data.bot_token, default_user=data.default_user
 		)
-		db.add(user)
+		db.add(session)
 		db.commit()
 		return OK
 	
