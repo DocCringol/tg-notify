@@ -1,7 +1,7 @@
 import time
 import json
 import utils
-import schemas
+import schemes
 from dotmap import DotMap
 from telethon.sync import TelegramClient, events
 from multiprocessing import Process, Queue
@@ -48,7 +48,7 @@ def bot_(qIn: Queue, qOut: Queue, session_name: str, run_uuid: str):
 				continue
 
 
-def new(q: Queue, data: schemas.New, uuid: str):
+def new(q: Queue, data: schemes.CreateSession, uuid: str):
 	session_name = data.session_name
 	try:
 		TelegramClient(
@@ -83,8 +83,8 @@ def run(q: Queue, botQin: Queue, botQout: Queue, session_name: str, uuid: str):
 	q.put(botQout.get())
 
 
-def send(q: Queue, botQin: Queue, botQout: Queue, data: schemas.Send, uuid: str):
-	botQin.put(["send", data.username, data.msg, uuid])
+def send(q: Queue, botQin: Queue, botQout: Queue, data: schemes.SendMessage, uuid: str):
+	botQin.put(["send", data.user, data.msg, uuid])
 	q.put(botQout.get())
 
 
@@ -96,9 +96,9 @@ if __name__ == "__main__":
 	botQin = Queue()
 	botQout = Queue()
 	session_name = input("\nInput session name:\n")
-	data = schemas.Send
+	data = schemes.SendMessage
 	data.session_name = session_name
-	data.username = input("\nInput username:\n")
+	data.user = input("\nInput nickname with @:\n")
 	data.msg = input("\nInput message:\n")
 	uuid = "test"
 	run(q, botQin, botQout, session_name, "test")

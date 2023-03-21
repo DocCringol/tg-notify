@@ -1,13 +1,13 @@
 import os
 import utils
 import worker
-import schemas
+import schemes
 from multiprocessing import Process, Queue
 
 
 
 # Function that completes /new task (Creates new bot session)
-def new(q: Queue, resQ: Queue, botQDict: dict, uuid: str, session_name: str, data: schemas.New, running: dict):
+def new(q: Queue, resQ: Queue, botQDict: dict, uuid: str, session_name: str, data: schemes.CreateSession, running: dict):
     # Checking existence of session
 	# TODO change WHEN DB
 	if os.path.exists(f"Configs/{session_name}.json"):
@@ -65,7 +65,7 @@ def run(q: Queue, resQ: Queue, botQDict: dict, uuid: str, session_name: str, run
 
 
 # Function that completes /send task (Sends message from definite bot to definite user)
-def send(q: Queue, resQ: Queue, botQDict: dict, uuid: str, session_name: str, data: schemas.New, running: dict):
+def send(q: Queue, resQ: Queue, botQDict: dict, uuid: str, session_name: str, data: schemes.CreateSession, running: dict):
 	# Checking if session is already started
 	# TODO this check but for bot and not session only
 	# TODO remove first condition WHEN DB
