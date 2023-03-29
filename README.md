@@ -99,6 +99,7 @@ data:
 
 ## To-do
 
+-	Make get_state command
 -	Configure logging
 -	Refactoring
 -	Write example client script
