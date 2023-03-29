@@ -53,7 +53,7 @@ def start(q: Queue, resQ: Queue, botQDict: dict, uuid: str, session_name: str, r
 	if session_name in running and running[session_name]:
 		processResponce(
 			resQ, 
-			utils.returnResponce(uuid, "start", session_name, 400,
+			utils.returnResponce(uuid, "start", session_name, 409,
 				"Bot is already running. At first /stop it"),
 			running
 		)

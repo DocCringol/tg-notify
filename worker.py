@@ -80,7 +80,7 @@ def create(q: Queue, data: schemes.CreateSession, uuid: str):
 	
 	if create_session(data) is SESSION_ALREADY_EXIST:
 		q.put(
-			utils.returnResponce(uuid, "create", session_name, 400, 
+			utils.returnResponce(uuid, "create", session_name, 409, 
 				f"Session already exist. At first /remove session with name: {session_name}. Or /update it, if you want to change data")
 		)
 		return
