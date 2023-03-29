@@ -99,6 +99,7 @@ data:
 
 ## To-do
 
+-	Add info about /get_result in readme
 -	Make get_state command
 -	Configure logging
 -	Refactoring
