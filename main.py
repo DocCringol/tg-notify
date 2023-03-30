@@ -154,4 +154,4 @@ if __name__ == "__main__":
 	p = Process(target=mainloop, args=((q),(resQ),(running)))
 	p.start()
 	# Starting API
-	uvicorn.run(app, host=args.host, port=args.port)
+	uvicorn.run(app, host=args.host, port=int(args.port))
